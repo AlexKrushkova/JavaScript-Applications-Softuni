@@ -1,11 +1,38 @@
 function solve() {
 
+    const infoSpan = document.getElementsByClassName(`info`)[0];
+    const departButtone = document.getElementById("depart");
+    const arriveButton = document.getElementById("arrive");
+
+    let currentId = 'depot';
+    let curretnName;
+
+    
     function depart() {
-        console.log('Depart TODO...');
+        fetch(`https://judgetests.firebaseio.com/schedule/${currentId}.json`)
+        .then(res => res.json())
+        .then(departSuccess)
+        .catch(err =>{
+            console.log(err);
+        })
     }
 
     function arrive() {
-        console.log('Arrive TODO...');
+        infoSpan.textContent = `Arriving at ${curretnName}`;
+        departButtone.disabled = false;
+        arriveButton.disabled = true;
+    }
+
+    function departSuccess(data){
+        const { name, next } = data;
+
+        currentId = next;
+        curretnName = name;
+
+        departButtone.disabled = true;
+        arriveButton.disabled = false;
+
+        infoSpan.textContent = `Next stop ${curretnName}`;
     }
 
     return {
