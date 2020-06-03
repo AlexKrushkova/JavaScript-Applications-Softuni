@@ -13,6 +13,7 @@ function solve() {
         .then(res => res.json())
         .then(departSuccess)
         .catch(err =>{
+            infoSpan.textContent = 'Wrong stop id!';
             console.log(err);
         })
     }
