@@ -1,65 +1,89 @@
 function attachEvents() {
+    
+    let ulPhonebook = document.querySelector("#phonebook");
+    let loadBtn = document.querySelector("#btnLoad");
 
-    document.querySelector('#btnLoad')
-        .addEventListener('click', () => loadNamesAndPhones());
+    let createBtn = document.querySelector("#btnCreate");
+    let contactName = document.querySelector("#person");
+    let contactPhone = document.querySelector("#phone");
 
-    document.querySelector('#btnCreate')
-        .addEventListener('click', () => addNamesAndPhonesToServer());
+    const url = "https://phonebook-nakov.firebaseio.com/phonebook.json";
 
-    function loadNamesAndPhones() {
-        const url = 'https://phonebook-nakov.firebaseio.com/phonebook.json';
-        fetch(url)
-            .then((request) => request.json())
-            .then((data) => {
-                document.getElementById('phonebook').innerHTML = '';
+    createBtn.addEventListener("click", addContact);
+    loadBtn.addEventListener("click", loadIsPressed);
 
-                const keys = Object.keys(data);
+    function addContact(){
+        const person = contactName.value;
+        const phone = contactPhone.value;
 
-                for (const key of keys) {
-                    const name = data[key].person;
-                    const phoneNumber = data[key].phone;
+        
+        let headers = {
+            method: 'POST',
+            headers: {'Content-type': 'application.json'},
+            body: JSON.stringify({person, phone})
+        };
 
-                    const dellBtn = document.createElement('button');
-                    dellBtn.textContent = 'Delete';
-                    dellBtn.addEventListener('click', function () {
-                        const url = `https://phonebook-nakov.firebaseio.com/phonebook/${key}.json`;
-                        fetch(url, {
-                            method: 'delete'
-                        })
-                            .then(response => response.json())
-                            .then(response => {
-                                loadNamesAndPhones();
-                            });
-                    });
-
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${name}: ${phoneNumber}`;
-                    listItem.appendChild(dellBtn);
-
-                    document.getElementById('phonebook').appendChild(listItem);
-                }
-            });
-    }
-
-    function addNamesAndPhonesToServer() {
-        const url = 'https://phonebook-nakov.firebaseio.com/phonebook.json';
-        const person = document.querySelector('#person').value;
-        const phone = document.querySelector('#phone').value;
-
-        let obj = {person, phone};
-        fetch(url, {
-            method: 'post',
-            headers: {'Content-type': 'application/json'},
-            body: JSON.stringify(obj)
+        fetch(url, headers)
+        // .then((res => res.json())
+        .then(()=> {
+            clearInput();
+            loadIsPressed();
         })
-            .then(response => response.json())
-            .then(response => {
-                loadNamesAndPhones();
-            });
-
-        document.querySelector('#person').value = '';
-        document.querySelector('#phone').value = '';
+        .catch(handleError)
+        
     }
+
+    function loadIsPressed(){
+        fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const {person, phone} = data;
+            Object.entries(data)
+                .forEach(([ elementId, phonebookData])=>{
+                    const { phone, person } = phonebookData;
+
+                    const li =  document.createElement("li");
+                    li.textContent = `${person}:${phone}`
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "Delete";
+                
+                    deleteBtn.setAttribute("data-target", elementId);
+                    deleteBtn.addEventListener("click", deleteElement);
+
+                    li.appendChild(deleteBtn);
+                    ulPhonebook.appendChild(li);
+
+                })
+        })
+        .catch(handleError);
+    }
+
+
+    function deleteElement(){
+            let ID = this.getAttribute("data-target");
+
+            let header = {
+                method: 'DELETE'
+            };
+
+            fetch(`https://phonebook-nakov.firebaseio.com/phonebook/${ID}.json`, header)
+            .then(() => {
+                ulPhonebook.innerHTML = "";
+                loadIsPressed();
+            })
+            .catch(handleError);
+    }
+
+    function clearInput(){
+        ulPhonebook.innerHTML = "";
+        contactName.value = "";
+        contactPhone.value = "";
+    }
+
+    function handleError(err){
+        console.log(err);
+    }
+
 }
 
 attachEvents();
