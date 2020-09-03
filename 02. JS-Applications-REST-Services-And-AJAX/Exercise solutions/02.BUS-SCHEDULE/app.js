@@ -1,40 +1,39 @@
 function solve() {
-
-    const infoSpan = document.getElementsByClassName(`info`)[0];
-    const departButtone = document.getElementById("depart");
-    const arriveButton = document.getElementById("arrive");
-
+    let spanInfo = document.querySelector(".info");
+    let departBtn = document.querySelector('#depart');
+    let arriveBtn = document.querySelector('#arrive');
     let currentId = 'depot';
-    let curretnName;
-
+    let currentName = '';
     
+
     function depart() {
+       
         fetch(`https://judgetests.firebaseio.com/schedule/${currentId}.json`)
-        .then(res => res.json())
-        .then(departSuccess)
-        .catch(err =>{
-            infoSpan.textContent = 'Wrong stop id!';
+            .then(res => res.json())
+            .then(departSuccess)
+            .catch(err =>{
             console.log(err);
         })
     }
 
     function arrive() {
-        infoSpan.textContent = `Arriving at ${curretnName}`;
-        departButtone.disabled = false;
-        arriveButton.disabled = true;
+            spanInfo.textContent = `Arriving at ${currentName}`;
+            departBtn.disabled = false;
+            arriveBtn.disabled = true;          
+       
     }
 
     function departSuccess(data){
         const { name, next } = data;
-
         currentId = next;
-        curretnName = name;
-
-        departButtone.disabled = true;
-        arriveButton.disabled = false;
-
-        infoSpan.textContent = `Next stop ${curretnName}`;
+        currentName = name;
+       
+        departBtn.disabled = true;
+        arriveBtn.disabled = false;        
+        
+        spanInfo.textContent = `Next stop ${currentName}`;
     }
+
 
     return {
         depart,
