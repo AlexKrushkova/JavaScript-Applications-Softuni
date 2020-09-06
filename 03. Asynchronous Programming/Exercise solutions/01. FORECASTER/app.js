@@ -1,65 +1,77 @@
-function attachEvents() {
-    const host = 'https://judgetests.firebaseio.com/';
-    const symbols = {
-        "Sunny": '&#x2600;',
-        "Partly sunny": '&#x26C5;',
-        "Overcast": '&#x2601;',
-        "Rain": '&#x2614;'
-    };
+import * as data from './data.js';
+import el from './dom.js';
 
-    $('#submit').on("click", getWeather);
+const symbols = {
+    'Sunny': '&#x2600;',
+    'Partly sunny': '&#x26C5;',
+    'Overcast': '&#x2601;',
+    'Rain': '&#x2614;',
+    'Degrees': '&#176;',
+};
 
-    function getWeather() {
-        let locationName = $('#location').val();
+window.addEventListener('load', () => {
+    const input = document.querySelector("#location");
+    const mainDiv = document.querySelector("#forecast");
+    const todayDiv = document.querySelector("#current");
+    const upcomingDiv = document.querySelector("#upcoming");
 
-        $.get(host + "locations.json")
-            .then(parseData);
+    document.querySelector('#submit').addEventListener("click", getForecast);
 
-        function parseData(codes) {
-            let code = undefined;
-            for (let location of codes) {
-                if (location.name === locationName) {
-                    code = location.code;
-                    break;
-                }
-            }
-            Promise.all([
-                $.get(host + `forecast/today/${code}.json`),
-                $.get(host + `forecast/upcoming/${code}.json`)
-            ]).then(displayResults)
-        }
+    async function getForecast() {
+        const locationName = input.value;
+        const code = await data.getCode(locationName);
 
-        function displayResults([today, upcoming]) {
-            let symbol = symbols[today.forecast.condition];
+        const todayP = data.getToday(code);
+        const upcomingP = data.getUpcoming(code);
 
-            const todayDiv = $('#current');
-            const upcomingDiv = $("#upcoming");
+        const [today, upcoming] = [
+            await todayP,
+            await upcomingP
+        ];
 
-            const htmlSymbol = `<span class="conditional symbol">${symbol}</span>`;
-            const htmlContent = `<span class="condition"><span class="forecast-data">${today.name}</span><span
-                    class="forecast-data">${today.forecast.low}&#176; / ${today.forecast.high}&#176;</span><span class="forecast-data">${today.forecast.condition}</span></span>`;
+        
+        const symbolSpan = el("span", '', { className: 'condition symbol' });
+        symbolSpan.innerHTML = symbols[today.forecast.condition];
 
-            todayDiv.empty();
-            todayDiv.append(`<div class="label">Current conditions</div>`);
-            todayDiv.append(htmlSymbol);
-            todayDiv.append(htmlContent);
+        const tempSpan = el("span", ``, { className: 'forecast-data' });
+        tempSpan.innerHTML = `${today.forecast.low}${symbols.Degrees}/${today.forecast.high}${symbols.Degrees}`;
 
-            upcomingDiv.empty();
-            upcomingDiv.append(`<div class="label">Three-day forecast</div>`);
-            for (let day of upcoming.forecast) {
-                upcomingDiv.append(upComing(day));
-            }
+        todayDiv.appendChild(
+            el("div", [
+                symbolSpan,
+                el("span", [
+                    el("span", today.name, { className: 'forecast-data' }),
+                    tempSpan,
+                    el("span", today.forecast.condition, { className: 'forecast-data' })
+                ], { className: 'condition' })
+            ], {
+                className: "forecast"
+            }));
 
-            $('#forecast').show();
-        }
+        const forecastInfoDiv = el('div', upcoming.forecast.map(renderUpcoming), { className: 'forecast-info' });
+        upcomingDiv.appendChild(forecastInfoDiv);
 
-        function upComing(data) {
-            let symbol = symbols[data.condition];
-            return `<span class="upcoming"><span
-                class="symbol">${symbol}</span><span
-                 class="condition"><span class="forecast-data">${data.low}&#176; / ${data.high}&#176;</span><span
-                    class="forecast-data">${data.condition}</span></span>`;
-        }
+        mainDiv.style.display = "block";
     }
 
-}
+
+    function renderUpcoming(forecast) {
+        const symbolSpan = el('span', '', { className: 'symbol' });
+        symbolSpan.innerHTML = symbols[forecast.condition];
+
+        const tempSpan = el('span', "", { className: 'forecast-data' });
+        tempSpan.innerHTML = `${forecast.low}${symbols.Degrees}/${forecast.high}${symbols.Degrees}`;
+
+
+        const result = el('span', [
+            symbolSpan,
+            tempSpan,
+            el('span', forecast.condition)
+        ], {
+            className: 'upcoming'
+        });
+
+        return result;
+    }
+});
+

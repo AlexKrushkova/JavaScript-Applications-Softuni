@@ -12,7 +12,7 @@ export default function el(type, content, attributes) {
     }
 
     function append(node) {
-        if (typeof node === 'string' || typeof node === "number") {
+        if (typeof node === 'string' || typeof node === 'number') {
             node = document.createTextNode(node);
         }
         result.appendChild(node);
